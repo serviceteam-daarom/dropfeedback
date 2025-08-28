@@ -107,11 +107,11 @@ const App = () => {
                     </Authenticated>
                   }
                 >
-                  <Route path="/login" element={<PageLogin />} />
-                  <Route path="/login/email" element={<PageLoginWithEmail />} />
-                  <Route path="/signup" element={<PageSignup />} />
+                  <Route path="login" element={<PageLogin />} />
+                  <Route path="login/email" element={<PageLoginWithEmail />} />
+                  <Route path="signup" element={<PageSignup />} />
                   <Route
-                    path="/signup/email"
+                    path="signup/email"
                     element={<PageSignupWithEmail />}
                   />
                 </Route>
