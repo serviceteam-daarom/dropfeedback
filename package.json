@@ -18,9 +18,11 @@
     "nuke:node_modules": "lerna clean --yes"
   },
   "devDependencies": {
+    "@vitest/ui": "0.34.7",
     "eslint": "^8.56.0",
     "lerna": "^8.0.0",
-    "prettier": "^3.0.0"
+    "prettier": "^3.0.0",
+    "vitest": "0.34.7"
   },
   "name": "dropfeedback",
   "packageManager": "npm@10.2.0",
