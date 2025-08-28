@@ -1,11 +1,10 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-
-import type { JwtPayload, JwtPayloadWithRefreshToken } from '../../auth/types';
+import type { User } from '@supabase/supabase-js';
 
 export const GetCurrentUser = createParamDecorator(
-  (_, context: ExecutionContext): JwtPayloadWithRefreshToken | JwtPayload => {
+  (_: unknown, context: ExecutionContext): User => {
     const request = context.switchToHttp().getRequest();
-    const user = request.user as JwtPayloadWithRefreshToken | JwtPayload;
+    const user = request.user as User;
     return user;
   },
 );

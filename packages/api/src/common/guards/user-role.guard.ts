@@ -40,7 +40,7 @@ export class UserRoleGuard implements CanActivate {
     const user = await this.prismaService.projectMember.findUnique({
       where: {
         userId_projectId: {
-          userId: request.user.sub,
+          userId: request.user.id,
           projectId: request.query.projectId || request.params.projectId,
         },
       },

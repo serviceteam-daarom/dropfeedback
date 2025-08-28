@@ -5,8 +5,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
 
 import { config } from './config';
 import { AppController } from './app.controller';
-import { AuthModule } from './auth/auth.module';
-import { AccessTokenGuard } from './common/guards';
+import { SupabaseGuard } from './common/guards';
 import { ProjectsModule } from './projects/projects.module';
 import { FeedbacksModule } from './feedbacks/feedbacks.module';
 import { MailModule } from './mail/mail.module';
@@ -20,7 +19,6 @@ import { PrismaModule } from './prisma/prisma.module';
       isGlobal: true,
     }),
     PrismaModule,
-    AuthModule,
     ProjectsModule,
     FeedbacksModule,
     MailModule,
@@ -33,7 +31,7 @@ import { PrismaModule } from './prisma/prisma.module';
   providers: [
     {
       provide: APP_GUARD,
-      useClass: AccessTokenGuard,
+      useClass: SupabaseGuard,
     },
   ],
 })

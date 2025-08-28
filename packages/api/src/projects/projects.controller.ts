@@ -38,7 +38,7 @@ import {
   UpdateProjectParam,
 } from './param';
 
-import type { JwtPayload } from 'src/auth/types';
+import type { User } from '@supabase/supabase-js';
 
 @Controller('projects')
 export class ProjectsController {
@@ -46,24 +46,24 @@ export class ProjectsController {
 
   @Get('/')
   @HttpCode(HttpStatus.OK)
-  getAllByUser(@GetCurrentUser() user: JwtPayload) {
-    return this.projectService.getAllByUser({ id: user.sub });
+  getAllByUser(@GetCurrentUser() user: User) {
+    return this.projectService.getAllByUser({ id: user.id });
   }
 
   @Post('/')
   @HttpCode(HttpStatus.CREATED)
   createProject(
-    @GetCurrentUser() user: JwtPayload,
+    @GetCurrentUser() user: User,
     @Body() dto: CreateProjectDto,
   ) {
-    return this.projectService.createProject({ userId: user.sub, dto });
+    return this.projectService.createProject({ userId: user.id, dto });
   }
 
   @Get('/current-user-invites')
   @HttpCode(HttpStatus.OK)
-  getCurrentUserInvites(@GetCurrentUser() user: JwtPayload) {
+  getCurrentUserInvites(@GetCurrentUser() user: User) {
     return this.projectService.currentUserInvites({
-      email: user.email,
+      email: user.email!,
     });
   }
 
@@ -135,25 +135,25 @@ export class ProjectsController {
   @Post('/:projectId/accept-invite')
   @HttpCode(HttpStatus.OK)
   acceptInvite(
-    @GetCurrentUser() user: JwtPayload,
+    @GetCurrentUser() user: User,
     @Param() param: AcceptInviteParam,
   ) {
     return this.projectService.acceptInvite({
       projectId: param.projectId,
-      userId: user.sub,
-      email: user.email,
+      userId: user.id,
+      email: user.email!,
     });
   }
 
   @Post('/:projectId/reject-invite')
   @HttpCode(HttpStatus.OK)
   rejectInvite(
-    @GetCurrentUser() user: JwtPayload,
+    @GetCurrentUser() user: User,
     @Param() param: RejectInviteParam,
   ) {
     return this.projectService.rejectInvite({
       projectId: param.projectId,
-      email: user.email,
+      email: user.email!,
     });
   }
 
@@ -162,16 +162,16 @@ export class ProjectsController {
   @UseGuards(UserRoleGuard)
   @HttpCode(HttpStatus.OK)
   async updateMemberRole(
-    @GetCurrentUser() user: JwtPayload,
+    @GetCurrentUser() user: User,
     @Param() param: UpdateMemberRoleParam,
     @Body() body: UpdateMemberRoleDto,
   ) {
-    if (user.sub === param.memberId)
+    if (user.id === param.memberId)
       throw new ForbiddenException('You cannot change your own role');
 
     await this.projectService.updateMemberRole({
       projectId: param.projectId,
-      operatorId: user.sub,
+      operatorId: user.id,
       memberId: param.memberId,
       newRole: body.role,
     });
@@ -182,12 +182,12 @@ export class ProjectsController {
   @UseGuards(UserRoleGuard)
   @HttpCode(HttpStatus.OK)
   async removeMember(
-    @GetCurrentUser() user: JwtPayload,
+    @GetCurrentUser() user: User,
     @Param() param: DeleteMemberDto,
   ) {
     await this.projectService.removeMember({
       projectId: param.projectId,
-      operatorId: user.sub,
+      operatorId: user.id,
       memberId: param.memberId,
     });
   }
@@ -198,12 +198,12 @@ export class ProjectsController {
   @UseGuards(UserRoleGuard)
   @HttpCode(HttpStatus.OK)
   async leaveProject(
-    @GetCurrentUser() user: JwtPayload,
+    @GetCurrentUser() user: User,
     @Param() param: LeaveProjectParam,
   ) {
     await this.projectService.leaveProject({
       projectId: param.projectId,
-      memberId: user.sub,
+      memberId: user.id,
     });
   }
 
@@ -220,12 +220,12 @@ export class ProjectsController {
   @UseGuards(UserRoleGuard)
   @HttpCode(HttpStatus.OK)
   async updateMemberNotifications(
-    @GetCurrentUser() user: JwtPayload,
+    @GetCurrentUser() user: User,
     @Param() param: UpdateMemberNotificationsParam,
     @Body() body: UpdateMemberNotificationsDto,
   ) {
     // user cant update other members notifications
-    if (user.sub !== param.memberId) {
+    if (user.id !== param.memberId) {
       throw new ForbiddenException(
         'You are not allowed to access this resource',
       );

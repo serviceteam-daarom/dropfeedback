@@ -4,7 +4,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { UserProviderType } from '@prisma/client';
 
 import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -12,25 +11,13 @@ import { UpdateUserDto } from './dto/update-user.dto';
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  async me({
-    userId,
-    userProviderType,
-  }: {
-    userId: string;
-    userProviderType: UserProviderType;
-  }) {
+  async me({ userId }: { userId: string }) {
     try {
       const user = await this.prisma.user.findUniqueOrThrow({
         where: { id: userId },
         include: {
-          UserProvider: true,
           projectMember: true,
         },
-      });
-
-      // user can have multiple providers, but we only need the one that matches the current request (e.g. google or internal)
-      const provider = user.UserProvider.find(function (provider) {
-        return provider.type === userProviderType;
       });
 
       return {
@@ -38,7 +25,6 @@ export class UsersService {
         email: user.email,
         avatarUrl: user.avatarUrl,
         fullName: user.fullName,
-        isEmailVerified: provider?.emailVerified,
         projects: user.projectMember.map((project) => ({
           id: project.projectId,
           role: project.role,
