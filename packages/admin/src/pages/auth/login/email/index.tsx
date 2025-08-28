@@ -12,9 +12,8 @@ import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LoadingIndicator } from "@/components/loading-indicator";
-import { fetchers } from "@/lib/fetchers";
-import { type ApiError } from "@/lib/axios";
-import { SigninLocalResponse } from "@/types";
+import { supabase } from "@/lib/supabase";
+import type { AuthError } from "@supabase/supabase-js";
 
 type Variables = { email: string; password: string };
 
@@ -23,8 +22,15 @@ const useLocalLogin = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  return useMutation<SigninLocalResponse, ApiError, Variables>({
-    mutationFn: fetchers.signin,
+  return useMutation<unknown, AuthError, Variables>({
+    mutationFn: async ({ email, password }) => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["me"] });
 
@@ -73,9 +79,7 @@ export const PageLoginWithEmail = () => {
               variant="destructive"
               className="border-red bg-red-foreground text-red"
             >
-              <AlertDescription>
-                {error?.response?.data?.message ?? error?.message}
-              </AlertDescription>
+              <AlertDescription>{error?.message}</AlertDescription>
             </Alert>
           </motion.div>
         )}

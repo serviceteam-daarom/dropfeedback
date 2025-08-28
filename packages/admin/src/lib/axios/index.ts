@@ -1,7 +1,6 @@
 import axios, { type AxiosError } from "axios";
-import Cookies from "js-cookie";
-import { fetchers } from "@/lib/fetchers";
 import { CONFIG } from "@/lib/config";
+import { supabase } from "@/lib/supabase";
 
 export const API_URL =
   CONFIG.nodeEnv === "production"
@@ -23,22 +22,24 @@ export const axiosInstance = axios.create({
 
 // auth header for axios
 axiosInstance.interceptors.request.use(
-  (config) => {
-    const accessToken = Cookies.get("accessToken");
-    const refreshToken = Cookies.get("refreshToken");
+    async (config) => {
+      const {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+        data: { session },
+      } = await supabase.auth.getSession(); // eslint-disable-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      if (session?.access_token && config.headers) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        config.headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
+    },
+  );
 
-    if ((accessToken || refreshToken) && config?.headers) {
-      config.headers["Authorization"] = `Bearer ${accessToken}`;
-      config.headers["x-refresh-token"] = refreshToken;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  },
-);
-
-// refresh token interceptor
+// response interceptor
 axiosInstance.interceptors.response.use(
   (response) => {
     return response;
@@ -53,7 +54,6 @@ axiosInstance.interceptors.response.use(
     const message = response?.data?.message;
 
     if (typeof window !== "undefined") {
-      // API returns 401 and message is "Invalid refresh token". redirect to login
       if (status === 401 && message === "Invalid refresh token") {
         if (window.location.pathname !== "/login") {
           window.location.replace("/login");
@@ -61,23 +61,12 @@ axiosInstance.interceptors.response.use(
         return Promise.reject(error);
       }
 
-      // API returns 403 and message is "Email is not verified". redirect to /email-verification
       if (status === 403 && message === "Email is not verified") {
         if (window.location.pathname !== "/email-verification") {
           window.location.replace("/email-verification");
         }
         return Promise.reject(error);
       }
-    }
-
-    const originalRequest = error.config as typeof error.config & {
-      _retry?: boolean;
-    };
-
-    if (response.status === 401 && !originalRequest?._retry) {
-      originalRequest._retry = true;
-      await fetchers.refreshToken();
-      return axiosInstance(originalRequest);
     }
 
     return Promise.reject(error);
