@@ -3,7 +3,8 @@ import { useForm } from "react-hook-form";
 import { ExternalLinkIcon } from "@radix-ui/react-icons";
 import { useMutation } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { fetchers } from "@/lib/fetchers";
+import { supabase } from "@/lib/supabase";
+import type { AuthError } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -15,8 +16,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LoadingIndicator } from "@/components/loading-indicator";
-import { type ApiError } from "@/lib/axios";
-import { SignupLocalResponse } from "@/types";
 
 type FormValues = {
   email: string;
@@ -27,8 +26,21 @@ type FormValues = {
 export const PageSignupWithEmail = () => {
   const navigate = useNavigate();
 
-  const signUp = useMutation<SignupLocalResponse, ApiError, FormValues>({
-    mutationFn: fetchers.signup,
+  const signUp = useMutation<unknown, AuthError, FormValues>({
+    mutationFn: async ({ email, password, fullName }) => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { fullName },
+          emailRedirectTo: `${window.location.origin}/email-verification?email=${encodeURIComponent(
+            email,
+          )}`,
+        },
+      });
+      if (error) throw error;
+    },
     onSuccess: () => {
       navigate("/projects");
     },
@@ -64,9 +76,7 @@ export const PageSignupWithEmail = () => {
               variant="destructive"
               className="border-red bg-red-foreground text-red"
             >
-              <AlertDescription>
-                {signUp.error?.response?.data?.message ?? signUp.error?.message}
-              </AlertDescription>
+              <AlertDescription>{signUp.error?.message}</AlertDescription>
             </Alert>
           </motion.div>
         )}

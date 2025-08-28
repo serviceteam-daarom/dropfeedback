@@ -1,4 +1,8 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { CONFIG } from "@/lib/config";
 
-export const supabase = createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
+// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+export const supabase: SupabaseClient = createClient(
+  CONFIG.supabaseUrl ?? "",
+  CONFIG.supabaseAnonKey ?? "",
+);

@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MenubarShortcut } from "@/components/ui/menubar";
 import { useMe } from "@/data-hooks";
-import { fetchers, removeAuthCookies } from "@/lib/fetchers";
+import { fetchers } from "@/lib/fetchers";
 import { getNameInitials } from "@/lib/utils";
 import { ProjectSwitcher } from "./project-switcher";
 import { ThemeSwitcher } from "./theme-switcher";
@@ -30,12 +30,7 @@ export function CommonHeader() {
 
   const logoutMutation = useMutation({
     mutationFn: fetchers.logout,
-    onError: () => {
-      removeAuthCookies();
-      navigate("/login");
-    },
-    onSuccess: () => {
-      removeAuthCookies();
+    onSettled: () => {
       navigate("/login");
     },
   });

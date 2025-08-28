@@ -1,6 +1,8 @@
-import Cookies from "js-cookie";
 import { axiosInstance } from "@/lib/axios";
+import { supabase } from "@/lib/supabase";
 import * as types from "@/types";
+
+/* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */
 
 const getProjects = async () => {
   const { data } = await axiosInstance.get<types.Project[]>("/projects");
@@ -86,71 +88,50 @@ const updateUser = async (payload: { fullName: string }) => {
   return data;
 };
 
-const signup = async (payload: { email: string; password: string }) => {
-  const { data } = await axiosInstance.post<types.SignupLocalResponse>(
-    "/auth/local/signup",
-    payload,
-  );
-  setAuthCookies({
-    accessToken: data.accessToken,
-    refreshToken: data.refreshToken,
+const signup = async (payload: {
+  email: string;
+  password: string;
+  fullName?: string;
+}) => {
+  const { data, error } = await supabase.auth.signUp({
+    email: payload.email,
+    password: payload.password,
+    options: {
+      data: { fullName: payload.fullName },
+    },
   });
+  if (error) throw error;
   return data;
 };
 
 const signin = async (payload: { email: string; password: string }) => {
-  const { data } = await axiosInstance.post<types.SigninLocalResponse>(
-    "/auth/local/signin",
-    payload,
-  );
-  setAuthCookies({
-    accessToken: data.accessToken,
-    refreshToken: data.refreshToken,
+  const { data, error } = await supabase.auth.signInWithPassword(payload);
+  if (error) throw error;
+  return data;
+};
+
+const verifyEmail = async ({ code }: { code: string }) => {
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+  if (error) throw error;
+  return data;
+};
+
+const resendVerificationEmail = async ({
+  email,
+}: {
+  email: string;
+}) => {
+  const { data, error } = await supabase.auth.resend({
+    type: "signup",
+    email,
   });
-  return data;
-};
-
-const verifyEmail = async (payload: types.VerifyEmailPayload) => {
-  const { data } = await axiosInstance.post<types.VerifyEmailLocalResponse>(
-    "/auth/local/verify-email",
-    payload,
-  );
-  return data;
-};
-
-const resendVerificationEmail = async () => {
-  const { data } = await axiosInstance.post<object>(
-    "/auth/local/send-verification-email",
-  );
+  if (error) throw error;
   return data;
 };
 
 const logout = async () => {
-  const { data } = await axiosInstance.post<object>("/auth/logout");
-  removeAuthCookies();
-  return data;
-};
-
-const refreshToken = async () => {
-  const { data } =
-    await axiosInstance.post<types.TokenResponse>("/auth/refresh");
-  setAuthCookies({
-    accessToken: data.accessToken,
-    refreshToken: data.refreshToken,
-  });
-  return data;
-};
-
-const googleLogin = async (payload: { idToken: string }) => {
-  const { data } = await axiosInstance.post<types.TokenResponse>(
-    "/auth/google/login",
-    payload,
-  );
-  setAuthCookies({
-    accessToken: data.accessToken,
-    refreshToken: data.refreshToken,
-  });
-  return data;
+  const { error } = await supabase.auth.signOut();
+  if (error) throw error;
 };
 
 const getFeedbacks = async ({
@@ -248,32 +229,6 @@ const getProjectTeam = async (projectId: string) => {
   return data;
 };
 
-export const setAuthCookies = ({
-  accessToken,
-  refreshToken,
-}: {
-  accessToken: string;
-  refreshToken: string;
-}) => {
-  Cookies.set("accessToken", accessToken, {
-    sameSite: "strict",
-    path: "/",
-    secure: true,
-    expires: 2,
-  });
-  Cookies.set("refreshToken", refreshToken, {
-    sameSite: "strict",
-    path: "/",
-    secure: true,
-    expires: 7,
-  });
-};
-
-export const removeAuthCookies = () => {
-  Cookies.remove("accessToken");
-  Cookies.remove("refreshToken");
-};
-
 export const fetchers = {
   getProjects,
   getProject,
@@ -291,8 +246,6 @@ export const fetchers = {
   verifyEmail,
   resendVerificationEmail,
   logout,
-  refreshToken,
-  googleLogin,
   getFeedbacks,
   getFeedback,
   updateFeedbackStatus,

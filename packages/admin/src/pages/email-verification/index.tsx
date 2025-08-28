@@ -4,9 +4,8 @@ import { useMutation } from "@tanstack/react-query";
 import { useTimer } from "use-timer";
 import { LoadingIndicator } from "@/components/loading-indicator";
 import { Button } from "@/components/ui/button";
-import { fetchers, setAuthCookies } from "@/lib/fetchers";
-import type { ApiError } from "@/lib/axios";
-import type { VerifyEmailPayload, VerifyEmailResponse } from "@/types";
+import { fetchers } from "@/lib/fetchers";
+import type { AuthError } from "@supabase/supabase-js";
 import { cn } from "@/lib/utils";
 
 export const PageEmailVerification = () => {
@@ -19,30 +18,27 @@ export const PageEmailVerification = () => {
   const navigate = useNavigate();
 
   const [params] = useSearchParams();
-  const emailVerificationToken = params.get("emailVerificationToken");
+  const code = params.get("code");
+  const email = params.get("email");
 
   const resendVerificationEmail = useMutation({
-    mutationFn: fetchers.resendVerificationEmail,
+    mutationFn: () =>
+      fetchers.resendVerificationEmail({ email: email ?? "" }),
   });
 
-  const verifyEmail = useMutation<
-    VerifyEmailResponse,
-    ApiError,
-    VerifyEmailPayload
-  >({
-    mutationFn: fetchers.verifyEmail,
-    onSuccess: (data) => {
-      setAuthCookies(data);
+  const verifyEmail = useMutation<unknown, AuthError, { code: string }>({
+    mutationFn: ({ code }) => fetchers.verifyEmail({ code }),
+    onSuccess: () => {
       navigate("/projects", { replace: true });
     },
   });
 
   useEffect(() => {
-    if (!emailVerificationToken) return;
+    if (!code) return;
 
-    verifyEmail.mutate({ emailVerificationToken });
+    verifyEmail.mutate({ code });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [verifyEmail.mutate, emailVerificationToken]);
+  }, [verifyEmail.mutate, code]);
 
   const handleResendVerificationEmail = async () => {
     await resendVerificationEmail.mutateAsync();
@@ -50,7 +46,7 @@ export const PageEmailVerification = () => {
   };
 
   const showApiError = verifyEmail.isError;
-  const showUrlInvalidError = !emailVerificationToken;
+  const showUrlInvalidError = !code;
   const hasError = showApiError || showUrlInvalidError;
   const showLoading =
     (verifyEmail.isPending || verifyEmail.isIdle) && !hasError;
