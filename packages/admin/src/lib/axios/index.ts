@@ -22,22 +22,20 @@ export const axiosInstance = axios.create({
 
 // auth header for axios
 axiosInstance.interceptors.request.use(
-    async (config) => {
-      const {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-        data: { session },
-      } = await supabase.auth.getSession(); // eslint-disable-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      if (session?.access_token && config.headers) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        config.headers["Authorization"] = `Bearer ${session.access_token}`;
-      }
-      return config;
-    },
-    (error) => {
-      return Promise.reject(error);
-    },
-  );
+  async (config) => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+    const { data } = await supabase.auth.getSession();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const accessToken = data.session?.access_token;
+
+    if (accessToken && config.headers) {
+      config.headers["Authorization"] = `Bearer ${accessToken}`;
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
 
 // response interceptor
 axiosInstance.interceptors.response.use(
