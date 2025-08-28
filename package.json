@@ -1,7 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "build": "lerna run build --include-dependencies",
+    "build": "lerna run build --include-dependencies && cp -r packages/admin/dist packages/api/dist/admin",
     "dev": "lerna run dev --stream --parallel --include-dependencies",
     "lint": "eslint \"**/*.{ts,tsx}\"",
     "lint:fix": "eslint --fix \"**/*.{ts,tsx}\"",
