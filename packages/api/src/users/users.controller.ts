@@ -6,36 +6,31 @@ import {
   HttpStatus,
   Patch,
 } from '@nestjs/common';
-import {
-  EmailVerificationIsNotRequired,
-  GetCurrentUser,
-} from 'src/common/decorators';
+import { GetCurrentUser } from 'src/common/decorators';
 
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 
-import type { JwtPayload } from 'src/auth/types';
+import type { User } from '@supabase/supabase-js';
 
 @Controller('users')
 export class UsersController {
   constructor(private usersService: UsersService) {}
 
   @Get('/me')
-  @EmailVerificationIsNotRequired()
   @HttpCode(HttpStatus.OK)
-  async me(@GetCurrentUser() user: JwtPayload) {
+  async me(@GetCurrentUser() user: User) {
     return this.usersService.me({
-      userId: user.sub,
-      userProviderType: user.provider,
+      userId: user.id,
     });
   }
 
   @Patch('/me')
   @HttpCode(HttpStatus.OK)
   async updateMe(
-    @GetCurrentUser() user: JwtPayload,
+    @GetCurrentUser() user: User,
     @Body() dto: UpdateUserDto,
   ) {
-    return this.usersService.updateMe(user.sub, dto);
+    return this.usersService.updateMe(user.id, dto);
   }
 }

@@ -4,12 +4,9 @@ import { ConfigService } from '@nestjs/config';
 import { render } from '@react-email/render';
 import { google } from 'googleapis';
 import { Options } from 'nodemailer/lib/smtp-transport';
-import { JwtService } from '@nestjs/jwt';
 import InviteEmail from 'src/mail/mails/invite-email';
 import { Feedback, Project } from '@prisma/client';
 
-import VerificationEmail from './mails/verification-email';
-import ResetPasswordEmail from './mails/reset-password-email';
 import FeedbackNotificationEmail from './mails/feedback-notification-email';
 
 @Injectable()
@@ -17,7 +14,6 @@ export class MailService {
   constructor(
     private readonly config: ConfigService,
     private readonly mailerService: MailerService,
-    private readonly jwtService: JwtService,
   ) {}
 
   private async setTransport() {
@@ -86,12 +82,6 @@ export class MailService {
     }
   }
 
-  async sendVerificationMail({ email }: { email: string }) {
-    const token = await this.generateToken({ email });
-    const html = render(VerificationEmail({ token }));
-    this.sendMail({ subject: 'Verification email', email, html });
-  }
-
   async sendInviteEmail({
     email,
     projectName,
@@ -101,12 +91,6 @@ export class MailService {
   }) {
     const html = render(InviteEmail({ projectName }));
     this.sendMail({ subject: 'Invite email', email, html });
-  }
-
-  async sendResetPasswordMail({ email }: { email: string }) {
-    const token = await this.generateToken({ email });
-    const html = render(ResetPasswordEmail({ token }));
-    this.sendMail({ subject: 'Forgot Password', email, html });
   }
 
   async sendFeedbackNotificationMail({
@@ -124,17 +108,5 @@ export class MailService {
       email,
       html,
     });
-  }
-
-  private async generateToken({ email }: { email: string }) {
-    return await this.jwtService.signAsync(
-      { email },
-      {
-        expiresIn: this.config.get<number>('EMAIL_TOKEN_EXPIRES_IN'),
-        secret: `${this.config.get<number>('EMAIL_TOKEN_SECRET')}`,
-        jwtid: email,
-        issuer: 'dropfeedback.com',
-      },
-    );
   }
 }

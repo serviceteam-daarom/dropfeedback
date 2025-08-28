@@ -4,6 +4,5 @@ export * from './cookies.decorator';
 export * from './device.decorator';
 export * from './origin.decorator';
 export * from './cursor-pagination.decorator';
-export * from './email-verification-is-not-required.decorator';
 export * from './roles.decorator';
 export * from './order-by.decorator';
