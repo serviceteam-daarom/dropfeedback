@@ -1,13 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
-import type { User } from "@supabase/supabase-js";
+import { fetchers } from "@/lib/fetchers";
+import type { MeResponse } from "@/types";
 
 export const useMe = () => {
-  const result = useQuery<User | null>({
+  const result = useQuery<MeResponse | null>({
     queryKey: ["me"],
     queryFn: async () => {
-      const { data } = await supabase.auth.getUser();
-      return data.user;
+      try {
+        const data = await fetchers.me();
+        return data;
+      } catch {
+        return null;
+      }
     },
     retry: false,
     refetchOnWindowFocus: false,
