@@ -13,9 +13,21 @@ export class AppController {
 
   @Get('login')
   getLogin(): string {
-    const indexPath = join(__dirname, '..', '..', 'admin', 'index.html');
-    if (existsSync(indexPath)) {
-      return readFileSync(indexPath, 'utf8');
+    const builtIndexPath = join(__dirname, 'admin', 'index.html');
+    if (existsSync(builtIndexPath)) {
+      return readFileSync(builtIndexPath, 'utf8');
+    }
+
+    const devIndexPath = join(
+      __dirname,
+      '..',
+      '..',
+      'admin',
+      'dist',
+      'index.html',
+    );
+    if (existsSync(devIndexPath)) {
+      return readFileSync(devIndexPath, 'utf8');
     }
 
     return 'Login page is handled on the client. Use the /auth endpoints to sign in.';
