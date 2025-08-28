@@ -46,6 +46,14 @@ After you have cloned the repository, you need to install the dependencies.
 npm install
 ```
 
+To ensure all package-specific dev dependencies are available across the workspace, bootstrap the packages:
+
+```bash
+npm install --workspaces
+# or
+npx lerna bootstrap
+```
+
 ### Start the development server
 
 After you have installed the dependencies, you can start the development server by running the following command. This will start the development server of each given package.
