@@ -21,7 +21,7 @@
     "eslint": "^8.56.0",
     "lerna": "^8.0.0",
     "prettier": "^3.0.0",
-    "vitest": "^2.0.0"
+    "vitest": "^3.0.0"
   },
   "name": "dropfeedback",
   "packageManager": "npm@10.2.0",
