@@ -1,6 +1,7 @@
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { useMe } from "@/data-hooks";
+import { supabase } from "@/lib/supabase";
+import type { Session } from "@supabase/supabase-js";
 
 type Props = {
   loading?: React.ReactNode;
@@ -30,14 +31,34 @@ export const Authenticated = ({
   redirectTo = "/login",
   children,
 }: Props) => {
-  const { data, isLoading } = useMe();
-  const isAuthenticated = !!data;
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const init = async () => {
+      const { data } = await supabase.auth.getSession();
+      setSession(data.session);
+      setIsLoading(false);
+    };
+
+    void init();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   if (isLoading) {
     return <>{loading}</>;
   }
 
-  if (!isAuthenticated) {
+  if (!session) {
     if (typeof fallback !== "undefined") {
       return <>{fallback}</>;
     } else {
